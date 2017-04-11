@@ -26,6 +26,7 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
@@ -90,8 +91,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         //locationManager.requestLocationUpdates(locationProvider, 0, 0, locationListener);
 
 
-        // Send mac and lat and long
-        String url = "https://morning-anchorage-16263.herokuapp.com/users/update_location";
+        // POST1 - SEND: MAC, LAT, LONG ;
+        // RETURN: mac_address, username, id, created_at, updated_at, latitude, longitude
+        //final String url = "https://morning-anchorage-16263.herokuapp.com/get_chats";
+        final String url = "https://morning-anchorage-16263.herokuapp.com/users/update_location";
         RequestQueue requestQueue = Volley.newRequestQueue(MainActivity.this);
         StringRequest postRequest = new StringRequest(Request.Method.POST, url,
                 new Response.Listener<String>()
@@ -102,6 +105,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                             Log.d("Response", response.toString());
                         try {
                             JSONObject jsonObject = new JSONObject(response);
+                            //VALUES TO PULL HERE.
+                            //-------------
                             String mac_address = jsonObject.getString("mac_address");
                             String latitude = jsonObject.getString("latitude");
                             String longitude = jsonObject.getString("longitude");
@@ -110,6 +115,69 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         } catch (Exception e) {
                             e.printStackTrace();
                             Log.wtf("error", e.getMessage());
+                            //Test commit changes.
+                        }
+
+                    }
+                },
+                new Response.ErrorListener()
+                {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        // error
+                        System.out.println(error.getMessage());
+                        Log.d("Error Response", error.toString());
+                    }
+                }
+        ) {
+            @Override
+            protected Map<String, String> getParams()
+            {
+                Map<String, String>  params = new HashMap<String, String>();
+                params.put("mac_address", "testtest");
+                params.put("latitude", "1");
+                params.put("longitude", "1");
+
+                return params;
+            }
+            @Override
+            public String getBodyContentType() {
+                return "application/x-www-form-urlencoded; charset=UTF-8";
+                //return "application/text/html; charset=UTF-8";
+                //return "application/json";
+            }
+        };
+        requestQueue.add(postRequest);
+
+
+        // POST2 - SEND: MAC
+        // RETURN: CHATID, NAME(USER'S), CREATOR, LAST_MESSAGE
+        final String url2 = "https://morning-anchorage-16263.herokuapp.com/get_chats";
+        RequestQueue chatQueue = Volley.newRequestQueue(MainActivity.this);
+        StringRequest chatRequest = new StringRequest(Request.Method.POST, url2,
+                new Response.Listener<String>()
+                {
+                    @Override
+                    public void onResponse(String response) {
+                        // response
+                        Log.d("Response", response.toString());
+                        try {
+                            JSONObject jsonObject = new JSONObject(response);
+
+                            JSONArray jsonArray = jsonObject.getJSONArray("chats");
+                            for(int i = 0; i< jsonArray.length(); i++) {
+                                //VALUES TO PULL HERE.
+                                //-------------
+                                JSONObject chats = jsonArray.getJSONObject(i);
+                                String chatID = chats.getString("id");
+                                String name = chats.getString("name");
+                                String creator = chats.getString("creator");
+                                String last_message = chats.getString("last_message");
+                            }
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                            Log.wtf("error", e.getMessage());
+                            //Test commit changes.
                         }
 
                     }
@@ -128,22 +196,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             protected Map<String, String> getParams()
             {
                 Map<String, String>  params = new HashMap<String, String>();
+                //CHANGE THIS TO ADDRESS NOT "TESTTEST" WHEN READY
                 params.put("mac_address", "testtest");
-                params.put("latitude", "1");
-                params.put("longitude", "1");
-
                 return params;
             }
             @Override
             public String getBodyContentType() {
                 return "application/x-www-form-urlencoded; charset=UTF-8";
-                //return "application/json";
             }
         };
-        requestQueue.add(postRequest);
-
-        //--------------
-
+        chatQueue.add(chatRequest);
+        //--------------END OF VOLLEY WORK IN MAINACTIVITY.
 
 
         // Create the adapter using the available chats
